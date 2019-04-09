@@ -15,6 +15,25 @@ def analyze(bot, update, args):
     message = "Your message of '" + message + "' yielded a score of: " + str(score)
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
+def respond_analysis(bot, update):
+    global client
+    message = update.message
+    text = message.text
+    print(text)
+    score = analysis.analyze(text, client).score
+    if(score >= .5):
+        bot_msg = "Whoa {} you are looking pretty happy there with a sentiment score of: {}" \
+                    .format(message.from_user.first_name, str(score))
+        bot.send_message(chat_id=message.chat_id, text=bot_msg)
+    elif(score <= -.5):
+        bot_msg = "You gotta calm down {}, you're super mad right now with a sentiment score of : {}" \
+                    .format(message.from_user.first_name, str(score))
+        bot.send_message(chat_id=message.chat_id, text=bot_msg)
+    elif(score == 0.0):
+        bot_msg = "I either can't analyze your message or you are extremely neutral {}" \
+                    .format(message.from_user.first_name)
+        bot.send_message(chat_id=message.chat_id, text=bot_msg)
+
 def main():
     with open('botkey.txt', 'r') as bot_key:
         key = bot_key.read().rstrip()
@@ -31,6 +50,7 @@ def main():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
     updater.dispatcher.add_handler(CommandHandler('analyze', analyze, pass_args=True))
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, respond_analysis))
 
     updater.start_polling()
     updater.idle()
